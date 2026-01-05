@@ -23,34 +23,44 @@ class Ship:
         is_horizontal = min_row == max_row
         is_vertical = min_column == max_column
 
+        if is_horizontal and is_vertical:
+            self.decks.append(Deck(min_row, min_column))
+            return
+
         if is_horizontal:
             for column in range(min_column, max_column + 1):
                 self.decks.append(Deck(min_row, column))
         elif is_vertical:
             for row in range(min_row, max_row + 1):
                 self.decks.append(Deck(row, min_column))
-        else:
-            self.decks.append(Deck(min_row, min_column))
 
     def get_deck(self, row: int, column: int) -> Deck:
         for deck in self.decks:
-            if deck.row == row and deck.column == column and deck.is_alive:
+            if deck.row == row and deck.column == column:
                 return deck
+        return None
 
     def fire(self, row: int, column: int) -> str:
         # Change the `is_alive` status of the deck
         # And update the `is_drowned` value if it's needed
+        if self.is_drowned:
+            return "Sunk!"
+
         deck = self.get_deck(row, column)
 
-        if deck:
-            deck.is_alive = False
+        if not deck:
+            return "Miss!"
 
-            if any(rest_deck.is_alive for rest_deck in self.decks):
-                return "Hit!"
+        if not deck.is_alive:
+            return "Miss!"
 
-            self.is_drowned = True
-            return "Sunk!"
-        return "Miss!"
+        deck.is_alive = False
+
+        if any(rest_deck.is_alive for rest_deck in self.decks):
+            return "Hit!"
+
+        self.is_drowned = True
+        return "Sunk!"
 
 
 class Battleship:
@@ -80,3 +90,29 @@ class Battleship:
             return ship.fire(*location)
 
         return "Miss!"
+
+    def print_field(self) -> None:
+        for row in range(10):
+            line = []
+            for column in range(10):
+                coord = (row, column)
+
+                if coord not in self.field:
+                    line.append("~")
+                    continue
+
+                ship = self.field[coord]
+
+                if ship.is_drowned:
+                    line.append("x")
+                    continue
+
+                deck = ship.get_deck(row, column)
+
+                if not deck.is_alive:
+                    line.append("*")
+                    continue
+
+                line.append("□")
+
+            print("".join(line))
